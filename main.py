@@ -119,7 +119,7 @@ async def adminhelp(ctx):
         value=(
             "• `$رول @عضو @رتبة` (أو `$role`) : يعطيه الرتبة لو ما عنده، ويسحبها لو عنده (نفس الأمر بالحالتين)\n"
             "• `$انقلع @عضو [السبب]` (أو `$kick`) : طرد عضو من السيرفر\n"
-            "• `$ختفي @عضو [السبب]` (أو `$ban`) : حظر عضو من السيرفر\n"
+            "• `$ختفو @عضو [السبب]` (أو `$ban`) : حظر عضو من السيرفر\n"
             "• `$timeout @عضو <دقائق> [السبب]` : تايم آوت مؤقت (كتم كامل)\n"
             "• `$untimeout @عضو` : إلغاء التايم آوت\n"
             "• `$اسم @عضو <الاسم>` (أو `$nickname`) : تغيير نك نيم عضو\n"
@@ -175,7 +175,7 @@ async def kick(ctx, member: discord.Member, *, reason: str = "لم يتم ذكر
         await ctx.reply("❌ تعذر طرد العضو. تأكد من أن رتبة البوت أعلى من العضو.", mention_author=True)
 
 
-@bot.command(aliases=['ختفي'])
+@bot.command(aliases=['ختفو'])
 @commands.has_role(ADMIN_ROLE_ID)
 async def ban(ctx, member: discord.Member, *, reason: str = "لم يتم ذكر سبب"):
     try:
