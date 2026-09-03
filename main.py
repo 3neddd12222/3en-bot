@@ -32,7 +32,7 @@ intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
 
-bot = commands.Bot(command_prefix="$", intents=intents)
+bot = commands.Bot(command_prefix="$", intents=intents, help_command=None)
 
 # رتبة الأدمن الوحيدة اللي تتحكم بكل أوامر النظام
 ADMIN_ROLE_ID = 1544759188289359944
