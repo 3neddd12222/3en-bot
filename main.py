@@ -18,7 +18,9 @@ def home():
 
 
 def run_flask():
-    app.run(host='0.0.0.0', port=8080)
+    # تعديل البورت هنا عشان يتوافق تلقائياً مع رندر وما يعطيني إيرور Exit status 1
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host='0.0.0.0', port=port)
 
 
 def keep_alive():
@@ -125,8 +127,7 @@ async def adminhelp(ctx):
             "• `$اسم @عضو <الاسم الجديد>` : تغيير نك نيم عضو\n"
             "• `$warn @عضو <سبب>` : تسجيل تحذير لعضو\n"
             "• `$warnings @عضو` : عرض تحذيرات عضو\n"
-            "• `$clearwarns @عضو` : تصفية تحذيرات عضو (جديد!)\n"
-            "• `$hideall` / `$showall` : إخفاء أو إظهار السيرفر (تعديل صلاحيات عامة)"
+            "• `$clearwarns @عضو` : تصفية تحذيرات عضو"
         ),
         inline=False
     )
@@ -146,7 +147,6 @@ async def adminhelp(ctx):
     embed.add_field(
         name="⚙️ مزايا إضافية للأدمن",
         value=(
-            "• `$avatarall` : جلب رابط صورة بروفايلك أو عضو معين بشكل مباشر ومدعم\n"
             "• `$ping` : فحص سرعة البوت\n"
             "• `$botstats` : حالة البوت والتشغيل\n"
             "• `$rolelist` : قائمة الرتب والأعضاء فيها"
@@ -159,7 +159,6 @@ async def adminhelp(ctx):
 @bot.command(name='role', aliases=['رول'])
 @commands.has_role(ADMIN_ROLE_ID)
 async def role_toggle(ctx, member: discord.Member, role: discord.Role):
-    """$role @عضو @رتبة -- تبديل الرتبة (إعطاء لو مو عنده، سحب لو عنده)."""
     try:
         if role in member.roles:
             await member.remove_roles(role)
@@ -248,7 +247,6 @@ async def warnings(ctx, member: discord.Member):
 @bot.command()
 @commands.has_role(ADMIN_ROLE_ID)
 async def clearwarns(ctx, member: discord.Member):
-    """تصفية ومسح جميع تحذيرات عضو معين."""
     if member.id in warnings_log:
         warnings_log[member.id] = []
         await ctx.reply(f"🧹 تم تصفية ومسح جميع تحذيرات العضو {member.mention} بنجاح!", mention_author=True)
@@ -257,16 +255,15 @@ async def clearwarns(ctx, member: discord.Member):
 
 
 # ==========================================
-# 🛠️ أوامر صنع الرتب والرومات للأدمنية (بالعربي والإنجليزي)
+# 🛠️ أوامر صنع الرتب والرومات للأدمنية
 # ==========================================
 
 @bot.command(name='صنع_رتبة', aliases=['createrole'])
 @commands.has_role(ADMIN_ROLE_ID)
 async def create_role(ctx, *, role_name: str):
-    """اصنع رتبة جديدة باللغة العربية أو الإنجليزية فوراً."""
     try:
         guild = ctx.guild
-        new_role = await guild.create_role(name=role_name, reason=fتم إنشاؤها بواسطة {ctx.author})
+        new_role = await guild.create_role(name=role_name, reason=f"أنشئت بواسطة {ctx.author}")
         await ctx.reply(f"✨ تم صنع الرتبة بنجاح: {new_role.mention} (الاسم: `{role_name}`)", mention_author=True)
     except Exception as e:
         await ctx.reply(f"❌ حدث خطأ أثناء صنع الرتبة: `{e}`", mention_author=True)
@@ -275,19 +272,17 @@ async def create_role(ctx, *, role_name: str):
 @bot.command(name='حذف_رتبة', aliases=['deleterole'])
 @commands.has_role(ADMIN_ROLE_ID)
 async def delete_role(ctx, role: discord.Role):
-    """حذف رتبة محددة من السيرفر."""
     try:
         role_name = role.name
-        await role.delete(reason=fحذفت بواسطة {ctx.author})
+        await role.delete(reason=f"حذفت بواسطة {ctx.author}")
         await ctx.reply(f"🗑️ تم حذف الرتبة **{role_name}** بنجاح!", mention_author=True)
     except Exception as e:
-        await ctx.reply(f"❌ تعذر حذف الرتبة (تأكد أن رتبة البوت أعلى منها): `{e}`", mention_author=True)
+        await ctx.reply(f"❌ تعذر حذف الرتبة: `{e}`", mention_author=True)
 
 
 @bot.command(name='صنع_روم', aliases=['createchannel'])
 @commands.has_role(ADMIN_ROLE_ID)
 async def create_channel(ctx, *, channel_name: str):
-    """صنع روم كتابي جديد بالعربي أو الإنجليزي."""
     try:
         guild = ctx.guild
         new_channel = await guild.create_text_channel(name=channel_name)
@@ -299,10 +294,9 @@ async def create_channel(ctx, *, channel_name: str):
 @bot.command(name='حذف_روم', aliases=['deletechannel'])
 @commands.has_role(ADMIN_ROLE_ID)
 async def delete_channel(ctx, channel: discord.TextChannel = None):
-    """حذف روم كتابي (لو ما حددت الروم، يحذف الروم الحالي)."""
     target_channel = channel or ctx.channel
     try:
-        await target_channel.delete(reason=fحذف بواسطة {ctx.author})
+        await target_channel.delete(reason=f"حذف بواسطة {ctx.author}")
     except Exception as e:
         await ctx.reply(f"❌ تعذر حذف الروم: `{e}`", mention_author=True)
 
@@ -368,7 +362,7 @@ async def botstats(ctx):
 
 
 # ==========================================
-# 🛑 معالجة الأخطاء (لو عضو عادي حاول يستخدم أوامر الأدمن)
+# 🛑 معالجة الأخطاء
 # ==========================================
 
 @role_toggle.error
@@ -394,7 +388,6 @@ async def botstats(ctx):
 @adminhelp.error
 async def admin_commands_error(ctx, error):
     if isinstance(error, commands.MissingRole):
-        # هنا العضو العادي بياكل زق ويطلع له رد أنه ممنوع يقرب للأوامر دي
         await ctx.reply("❌ عذراً، هذا الأمر مخصص للإدارة العليا فقط! الأعضاء العاديين ما لهم حق.", mention_author=True)
     else:
         raise error
