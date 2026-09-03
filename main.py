@@ -102,48 +102,54 @@ async def avatar(ctx, member: discord.Member = None):
 
 
 # ==========================================
-# 🛡️ أوامر النظام -- حصرياً لرتبة الأدمن المحددة
+# 🛡️ أوامر النظام المجنونة -- حصرياً للأدمنية فقط
 # ==========================================
 
 @bot.command(name='adminhelp', aliases=['نظام'])
 @commands.has_role(ADMIN_ROLE_ID)
 async def adminhelp(ctx):
-    """قائمة كاملة بكل أوامر النظام -- ما تطلع إلا لصاحب الرتبة."""
+    """قائمة كاملة بكل أوامر الإدارة الخارقة."""
     embed = discord.Embed(
-        title="🛡️ أوامر النظام الكاملة",
-        description="هذي كل الأوامر الإدارية، محصورة على رتبة الأدمن فقط.",
+        title="🛡️ أوامر النظام الإدارية الخارقة",
+        description="هذي الأوامر محصورة على الأدمنية فقط ولا يمكن للأعضاء استخدامها.",
         color=discord.Color.red()
     )
     embed.add_field(
-        name="👤 إدارة الأعضاء",
+        name="👤 إدارة الأعضاء والعقوبات",
         value=(
-            "• `$رول @عضو @رتبة` (أو `$role`) : يعطيه الرتبة لو ما عنده، ويسحبها لو عنده (نفس الأمر بالحالتين)\n"
-            "• `$انقلع @عضو [السبب]` (أو `$kick`) : طرد عضو من السيرفر\n"
-            "• `$ختفو @عضو [السبب]` (أو `$ban`) : حظر عضو من السيرفر\n"
-            "• `$timeout @عضو <دقائق> [السبب]` : تايم آوت مؤقت (كتم كامل)\n"
+            "• `$رول @عضو @رتبة` : سحب أو إعطاء رتبة\n"
+            "• `$انقلع @عضو [السبب]` : طرد عضو\n"
+            "• `$ختفو @عضو [السبب]` : حظر عضو\n"
+            "• `$timeout @عضو <دقائق> [السبب]` : تايم آوت مؤقت\n"
             "• `$untimeout @عضو` : إلغاء التايم آوت\n"
-            "• `$اسم @عضو <الاسم>` (أو `$nickname`) : تغيير نك نيم عضو\n"
+            "• `$اسم @عضو <الاسم الجديد>` : تغيير نك نيم عضو\n"
             "• `$warn @عضو <سبب>` : تسجيل تحذير لعضو\n"
-            "• `$warnings @عضو` : عرض تحذيرات عضو"
+            "• `$warnings @عضو` : عرض تحذيرات عضو\n"
+            "• `$clearwarns @عضو` : تصفية تحذيرات عضو (جديد!)\n"
+            "• `$hideall` / `$showall` : إخفاء أو إظهار السيرفر (تعديل صلاحيات عامة)"
         ),
         inline=False
     )
     embed.add_field(
-        name="💬 إدارة الروم",
+        name="💬 إدارة الرومات والرتب (مع صنع الرتب)",
         value=(
-            "• `$مسح <عدد>` (أو `$clear`) : مسح عدد من الرسائل\n"
-            "• `$قفل` (أو `$lock`) : قفل الروم الكتابي\n"
-            "• `$فتح` (أو `$unlock`) : فك قفل الروم الكتابي\n"
-            "• `$سلومود <ثواني>` (أو `$slowmode`) : تفعيل الوضع البطيء للروم الحالي (0 لإيقافه)"
+            "• `$صنع_رتبة <الاسم>` (أو `$createrole`) : صنع رتبة جديدة بالعربي/الإنجليزي\n"
+            "• `$حذف_رتبة <الرتبة>` (أو `$deleterole`) : حذف رتبة من السيرفر\n"
+            "• `$صنع_روم <اسم>` (أو `$createchannel`) : صنع روم كتابي جديد\n"
+            "• `$حذف_روم <الروم>` (أو `$deletechannel`) : حذف روم\n"
+            "• `$مسح <عدد>` : مسح الرسائل\n"
+            "• `$قفل` / `$فتح` : قفل أو فتح الروم\n"
+            "• `$سلومود <ثواني>` : الوضع البطيء"
         ),
         inline=False
     )
     embed.add_field(
-        name="⚙️ عام",
+        name="⚙️ مزايا إضافية للأدمن",
         value=(
-            "• `$ping` : فحص استجابة البوت\n"
-            "• `$botstats` : حالة البوت (مدة التشغيل وعدد السيرفرات)\n"
-            "• `$rolelist` : عرض كل رتب السيرفر"
+            "• `$avatarall` : جلب رابط صورة بروفايلك أو عضو معين بشكل مباشر ومدعم\n"
+            "• `$ping` : فحص سرعة البوت\n"
+            "• `$botstats` : حالة البوت والتشغيل\n"
+            "• `$rolelist` : قائمة الرتب والأعضاء فيها"
         ),
         inline=False
     )
@@ -153,7 +159,7 @@ async def adminhelp(ctx):
 @bot.command(name='role', aliases=['رول'])
 @commands.has_role(ADMIN_ROLE_ID)
 async def role_toggle(ctx, member: discord.Member, role: discord.Role):
-    """$role @عضو @رتبة -- لو ما عنده الرتبة يعطيها له، ولو عنده نفس الرتبة يسحبها منه (نفس الأمر لعكس الحالتين)."""
+    """$role @عضو @رتبة -- تبديل الرتبة (إعطاء لو مو عنده، سحب لو عنده)."""
     try:
         if role in member.roles:
             await member.remove_roles(role)
@@ -241,8 +247,64 @@ async def warnings(ctx, member: discord.Member):
 
 @bot.command()
 @commands.has_role(ADMIN_ROLE_ID)
-async def ping(ctx):
-    await ctx.reply(f"🏓 شغال ياحلو! سرعة الاستجابة: **{round(bot.latency * 1000)}ms**", mention_author=True)
+async def clearwarns(ctx, member: discord.Member):
+    """تصفية ومسح جميع تحذيرات عضو معين."""
+    if member.id in warnings_log:
+        warnings_log[member.id] = []
+        await ctx.reply(f"🧹 تم تصفية ومسح جميع تحذيرات العضو {member.mention} بنجاح!", mention_author=True)
+    else:
+        await ctx.reply(f"ℹ️ العضو {member.mention} ليس لديه أي تحذيرات أصلًا.", mention_author=True)
+
+
+# ==========================================
+# 🛠️ أوامر صنع الرتب والرومات للأدمنية (بالعربي والإنجليزي)
+# ==========================================
+
+@bot.command(name='صنع_رتبة', aliases=['createrole'])
+@commands.has_role(ADMIN_ROLE_ID)
+async def create_role(ctx, *, role_name: str):
+    """اصنع رتبة جديدة باللغة العربية أو الإنجليزية فوراً."""
+    try:
+        guild = ctx.guild
+        new_role = await guild.create_role(name=role_name, reason=fتم إنشاؤها بواسطة {ctx.author})
+        await ctx.reply(f"✨ تم صنع الرتبة بنجاح: {new_role.mention} (الاسم: `{role_name}`)", mention_author=True)
+    except Exception as e:
+        await ctx.reply(f"❌ حدث خطأ أثناء صنع الرتبة: `{e}`", mention_author=True)
+
+
+@bot.command(name='حذف_رتبة', aliases=['deleterole'])
+@commands.has_role(ADMIN_ROLE_ID)
+async def delete_role(ctx, role: discord.Role):
+    """حذف رتبة محددة من السيرفر."""
+    try:
+        role_name = role.name
+        await role.delete(reason=fحذفت بواسطة {ctx.author})
+        await ctx.reply(f"🗑️ تم حذف الرتبة **{role_name}** بنجاح!", mention_author=True)
+    except Exception as e:
+        await ctx.reply(f"❌ تعذر حذف الرتبة (تأكد أن رتبة البوت أعلى منها): `{e}`", mention_author=True)
+
+
+@bot.command(name='صنع_روم', aliases=['createchannel'])
+@commands.has_role(ADMIN_ROLE_ID)
+async def create_channel(ctx, *, channel_name: str):
+    """صنع روم كتابي جديد بالعربي أو الإنجليزي."""
+    try:
+        guild = ctx.guild
+        new_channel = await guild.create_text_channel(name=channel_name)
+        await ctx.reply(f"📢 تم إنشاء الروم الكتابي بنجاح: {new_channel.mention}", mention_author=True)
+    except Exception as e:
+        await ctx.reply(f"❌ حدث خطأ أثناء إنشاء الروم: `{e}`", mention_author=True)
+
+
+@bot.command(name='حذف_روم', aliases=['deletechannel'])
+@commands.has_role(ADMIN_ROLE_ID)
+async def delete_channel(ctx, channel: discord.TextChannel = None):
+    """حذف روم كتابي (لو ما حددت الروم، يحذف الروم الحالي)."""
+    target_channel = channel or ctx.channel
+    try:
+        await target_channel.delete(reason=fحذف بواسطة {ctx.author})
+    except Exception as e:
+        await ctx.reply(f"❌ تعذر حذف الروم: `{e}`", mention_author=True)
 
 
 @bot.command(aliases=['مسح'])
@@ -288,6 +350,12 @@ async def rolelist(ctx):
 
 @bot.command()
 @commands.has_role(ADMIN_ROLE_ID)
+async def ping(ctx):
+    await ctx.reply(f"🏓 شغال ياحلو! سرعة الاستجابة: **{round(bot.latency * 1000)}ms**", mention_author=True)
+
+
+@bot.command()
+@commands.has_role(ADMIN_ROLE_ID)
 async def botstats(ctx):
     uptime_seconds = int(time.time() - BOT_START_TIME)
     hours, remainder = divmod(uptime_seconds, 3600)
@@ -299,6 +367,10 @@ async def botstats(ctx):
     await ctx.reply(embed=embed, mention_author=True)
 
 
+# ==========================================
+# 🛑 معالجة الأخطاء (لو عضو عادي حاول يستخدم أوامر الأدمن)
+# ==========================================
+
 @role_toggle.error
 @kick.error
 @ban.error
@@ -307,6 +379,11 @@ async def botstats(ctx):
 @nickname.error
 @warn.error
 @warnings.error
+@clearwarns.error
+@create_role.error
+@delete_role.error
+@create_channel.error
+@delete_channel.error
 @ping.error
 @clear.error
 @lock.error
@@ -317,14 +394,15 @@ async def botstats(ctx):
 @adminhelp.error
 async def admin_commands_error(ctx, error):
     if isinstance(error, commands.MissingRole):
-        await ctx.reply("❌ عذراً، هذا الأمر مخصص للإدارة فقط!", mention_author=True)
+        # هنا العضو العادي بياكل زق ويطلع له رد أنه ممنوع يقرب للأوامر دي
+        await ctx.reply("❌ عذراً، هذا الأمر مخصص للإدارة العليا فقط! الأعضاء العاديين ما لهم حق.", mention_author=True)
     else:
         raise error
 
 
 @bot.event
 async def on_ready():
-    print(f"✅ تم تشغيل البوت بنجاح: {bot.user}")
+    print(f"✅ تم تشغيل بوت النظام الإداري بنجاح: {bot.user}")
 
 
 # تشغيل خادم الويب للحفاظ على الاتصال 24/7
