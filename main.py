@@ -105,7 +105,7 @@ async def on_voice_state_update(member, before, after):
 # ==========================================
 
 @bot.command()
-async def help(ctx):
+async def bothelp(ctx):
     embed = discord.Embed(
         title="📜 قائمة أوامر البوت الشاملة",
         description="جميع الأوامر المتاحة في السيرفر مقسمة حسب الصلاحيات:",
@@ -278,4 +278,5 @@ async def admin_commands_error(ctx, error):
 keep_alive()
 
 # 🔴 حط التوكين الجديد بعد الـ Reset في السطر السفلي
-bot.run("MTU0NDc0NTUwOTIzMzg4NTQ0NQ.G3VDRb.WUStupEjkpHhCR2LlCq9-vs2llx7lv9hS4ECeQ")
+import os
+bot.run(os.environ.get("DISCORD_TOKEN"))
