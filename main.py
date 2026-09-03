@@ -277,6 +277,27 @@ async def admin_commands_error(ctx, error):
 # تشغيل خادم الويب
 keep_alive()
 
+# أمر دخول الروم الصوتي والبقاء فيه
+@bot.command(name='خش', aliases=['join'])
+async def join(ctx):
+    if ctx.author.voice and ctx.author.voice.channel:
+        channel = ctx.author.voice.channel
+        if ctx.voice_client is not None and ctx.voice_client.is_connected():
+            await ctx.voice_client.move_to(channel)
+        else:
+            await channel.connect()
+        await ctx.send(f'أشرت علي ودخلت معك روم: **{channel.name}** ومتكي معك للصبح!')
+    else:
+        await ctx.send('يا طويل العمر، ادخل روم صوتي!')
+
+# أمر خروج البوت من الروم
+@bot.command(name='طلع', aliases=['leave', 'out'])
+async def leave(ctx):
+    if ctx.voice_client:
+        await ctx.voice_client.disconnect()
+        await ctx.send('أشرت علي وطلعت، نشوفك على خير!')
+    else:
+        await ctx.send('أنا أساساً ماني في أي روم صوتي!')
 # 🔴 حط التوكين الجديد بعد الـ Reset في السطر السفلي
 import os
 bot.run(os.environ.get("DISCORD_TOKEN"))
