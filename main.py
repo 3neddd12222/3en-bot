@@ -1,4 +1,4 @@
-from __future__ import annotations  # يخلي type hints متوافقة حتى مع بايثون أقدم من 3.10
+from __future__ import annotations
 
 import os
 import time
@@ -8,58 +8,49 @@ from discord.ext import commands
 from flask import Flask
 from threading import Thread
 
-# --- 1. خادم ويب مصغر (Flask) لإبقاء البوت متصلاً 24/7 على Render ---
+# --- 1. خادم ويب مصغر (Flask) متوافق تماماً مع Render ---
 app = Flask('')
-
 
 @app.route('/')
 def home():
     return "Bot is Alive 24/7!"
 
-
 def run_flask():
-    port = int(os.environ.get("PORT", 8080))
+    # استخدام المنفذ المخصص من Render تلقائياً لتجنب إغلاق السيرفر
+    port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
-
 
 def keep_alive():
     t = Thread(target=run_flask)
     t.daemon = True
     t.start()
 
-
-# --- 2. إعدادات البوت والـ Intents الشاملة ---
-intents = discord.Intents.all()  # تفعيل كل الأذونات لمنع أي تعارض في القراءة
+# --- 2. إعدادات البوت والـ Intents الآمنة ---
+intents = discord.Intents.default()
+intents.message_content = True
+intents.members = True
+intents.guilds = True
 
 bot = commands.Bot(command_prefix="$", intents=intents, help_command=None)
 
-# رتبة الأدمن الوحيدة اللي تتحكم بكل أوامر النظام (الـ ID الخاص بك)
+# رتبة الأدمن الوحيدة
 ADMIN_ROLE_ID = 1544759188289359944
-
 BOT_START_TIME = time.time()
-
-# سجل بسيط للتحذيرات (بالذاكرة فقط)
 warnings_log: dict[int, list[dict]] = {}
 
-
-# --- 3. معالج الرسائل والأوامر المباشر ---
+# --- 3. معالج الرسائل المباشر لضمان معالجة الأوامر ---
 @bot.event
 async def on_message(message):
-    # تجاهل رسائل البوتات
     if message.author.bot:
         return
-
-    # إجبار البوت على معالجة الأوامر تلقائياً
     await bot.process_commands(message)
 
-
 # ==========================================
-# 📢 أوامر الأعضاء العامة (General Commands)
+# 📢 أوامر الأعضاء العامة
 # ==========================================
 
 @bot.command(name='help')
 async def help_cmd(ctx):
-    """أوامر عامة للجميع فقط -- ما تعرض أوامر النظام."""
     embed = discord.Embed(
         title="📜 أوامر البوت",
         description="هذي الأوامر المتاحة لجميع الأعضاء.",
@@ -78,7 +69,6 @@ async def help_cmd(ctx):
     embed.set_footer(text="لأوامر الإدارة الكاملة راسل الأدمن.")
     await ctx.reply(embed=embed, mention_author=True)
 
-
 @bot.command()
 async def userinfo(ctx, member: discord.Member = None):
     member = member or ctx.author
@@ -89,7 +79,6 @@ async def userinfo(ctx, member: discord.Member = None):
     embed.add_field(name="تاريخ انضمامه للسيرفر:", value=member.joined_at.strftime("%Y/%m/%d"), inline=False)
     embed.add_field(name="تاريخ إنشاء الحساب:", value=member.created_at.strftime("%Y/%m/%d"), inline=False)
     await ctx.reply(embed=embed, mention_author=True)
-
 
 @bot.command()
 async def serverinfo(ctx):
@@ -102,7 +91,6 @@ async def serverinfo(ctx):
     embed.add_field(name="تاريخ إنشاء السيرفر:", value=guild.created_at.strftime("%Y/%m/%d"), inline=False)
     await ctx.reply(embed=embed, mention_author=True)
 
-
 @bot.command()
 async def avatar(ctx, member: discord.Member = None):
     member = member or ctx.author
@@ -110,15 +98,13 @@ async def avatar(ctx, member: discord.Member = None):
     embed.set_image(url=member.display_avatar.url)
     await ctx.reply(embed=embed, mention_author=True)
 
-
 # ==========================================
-# 🛡️ أوامر النظام المجنونة -- حصرياً للأدمنية فقط
+# 🛡️ أوامر الإدارة
 # ==========================================
 
 @bot.command(name='adminhelp', aliases=['نظام'])
 @commands.has_role(ADMIN_ROLE_ID)
 async def adminhelp(ctx):
-    """قائمة كاملة بكل أوامر الإدارة الخارقة."""
     embed = discord.Embed(
         title="🛡️ أوامر النظام الإدارية الخارقة",
         description="هذي الأوامر محصورة على الأدمنية فقط ولا يمكن للأعضاء استخدامها.",
@@ -140,12 +126,12 @@ async def adminhelp(ctx):
         inline=False
     )
     embed.add_field(
-        name="💬 إدارة الرومات والرتب (مع صنع الرتب)",
+        name="💬 إدارة الرومات والرتب",
         value=(
-            "• `$صنع_رتبة <الاسم>` (أو `$createrole`) : صنع رتبة جديدة بالعربي/الإنجليزي\n"
-            "• `$حذف_رتبة <الرتبة>` (أو `$deleterole`) : حذف رتبة من السيرفر\n"
-            "• `$صنع_روم <اسم>` (أو `$createchannel`) : صنع روم كتابي جديد\n"
-            "• `$حذف_روم <الروم>` (أو `$deletechannel`) : حذف روم\n"
+            "• `$صنع_رتبة <الاسم>` : صنع رتبة جديدة\n"
+            "• `$حذف_رتبة <الرتبة>` : حذف رتبة من السيرفر\n"
+            "• `$صنع_روم <اسم>` : صنع روم كتابي جديد\n"
+            "• `$حذف_روم <الروم>` : حذف روم\n"
             "• `$مسح <عدد>` : مسح الرسائل\n"
             "• `$قفل` / `$فتح` : قفل أو فتح الروم\n"
             "• `$سلومود <ثواني>` : الوضع البطيء"
@@ -153,7 +139,7 @@ async def adminhelp(ctx):
         inline=False
     )
     embed.add_field(
-        name="⚙️ مزايا إضافية للأدمن",
+        name="⚙️ مزايا إضافية",
         value=(
             "• `$ping` : فحص سرعة البوت\n"
             "• `$botstats` : حالة البوت والتشغيل\n"
@@ -163,40 +149,36 @@ async def adminhelp(ctx):
     )
     await ctx.reply(embed=embed, mention_author=True)
 
-
 @bot.command(name='role', aliases=['رول'])
 @commands.has_role(ADMIN_ROLE_ID)
 async def role_toggle(ctx, member: discord.Member, role: discord.Role):
     try:
         if role in member.roles:
             await member.remove_roles(role)
-            await ctx.reply(f"🧹 تم سحب رتبة **{role.name}** من العضو {member.mention} بنجاح!", mention_author=True)
+            await ctx.reply(f"🧹 تم سحب رتبة **{role.name}** من {member.mention}!", mention_author=True)
         else:
             await member.add_roles(role)
-            await ctx.reply(f"✅ تم إعطاء رتبة **{role.name}** للعضو {member.mention} بنجاح!", mention_author=True)
+            await ctx.reply(f"✅ تم إعطاء رتبة **{role.name}** لـ {member.mention}!", mention_author=True)
     except Exception:
-        await ctx.reply("❌ تعذر تنفيذ الأمر. تأكد من صلاحيات البوت وأن رتبته أعلى من الرتبة المطلوبة.", mention_author=True)
-
+        await ctx.reply("❌ تعذر تنفيذ الأمر. تأكد أن رتبة البوت أعلى من الرتبة المطلوبة.", mention_author=True)
 
 @bot.command(aliases=['انقلع'])
 @commands.has_role(ADMIN_ROLE_ID)
 async def kick(ctx, member: discord.Member, *, reason: str = "لم يتم ذكر سبب"):
     try:
         await member.kick(reason=reason)
-        await ctx.reply(f"👞 تم طرد العضو {member.mention} من السيرفر. السبب: `{reason}`", mention_author=True)
+        await ctx.reply(f"👞 تم طرد {member.mention}. السبب: `{reason}`", mention_author=True)
     except Exception:
-        await ctx.reply("❌ تعذر طرد العضو. تأكد من أن رتبة البوت أعلى من العضو.", mention_author=True)
-
+        await ctx.reply("❌ تعذر طرد العضو.", mention_author=True)
 
 @bot.command(aliases=['ختفو'])
 @commands.has_role(ADMIN_ROLE_ID)
 async def ban(ctx, member: discord.Member, *, reason: str = "لم يتم ذكر سبب"):
     try:
         await member.ban(reason=reason)
-        await ctx.reply(f"🔨 تم حظر العضو {member.mention} من السيرفر. السبب: `{reason}`", mention_author=True)
+        await ctx.reply(f"🔨 تم حظر {member.mention}. السبب: `{reason}`", mention_author=True)
     except Exception:
-        await ctx.reply("❌ تعذر حظر العضو. تأكد من صلاحيات البوت.", mention_author=True)
-
+        await ctx.reply("❌ تعذر حظر العضو.", mention_author=True)
 
 @bot.command()
 @commands.has_role(ADMIN_ROLE_ID)
@@ -204,10 +186,9 @@ async def timeout(ctx, member: discord.Member, minutes: int, *, reason: str = "�
     try:
         until = discord.utils.utcnow() + timedelta(minutes=minutes)
         await member.timeout(until, reason=reason)
-        await ctx.reply(f"⏱️ تم إعطاء {member.mention} تايم آوت لمدة **{minutes} دقيقة**. السبب: `{reason}`", mention_author=True)
+        await ctx.reply(f"⏱️ تم إعطاء {member.mention} تايم آوت لمدة **{minutes} دقيقة**.", mention_author=True)
     except Exception as e:
         await ctx.reply(f"❌ تعذر تنفيذ التايم آوت: `{e}`", mention_author=True)
-
 
 @bot.command()
 @commands.has_role(ADMIN_ROLE_ID)
@@ -218,7 +199,6 @@ async def untimeout(ctx, member: discord.Member):
     except Exception as e:
         await ctx.reply(f"❌ تعذر إلغاء التايم آوت: `{e}`", mention_author=True)
 
-
 @bot.command(aliases=['اسم'])
 @commands.has_role(ADMIN_ROLE_ID)
 async def nickname(ctx, member: discord.Member, *, new_name: str):
@@ -227,7 +207,6 @@ async def nickname(ctx, member: discord.Member, *, new_name: str):
         await ctx.reply(f"✏️ تم تغيير اسم {member.mention} إلى **{new_name}**.", mention_author=True)
     except Exception as e:
         await ctx.reply(f"❌ تعذر تغيير الاسم: `{e}`", mention_author=True)
-
 
 @bot.command()
 @commands.has_role(ADMIN_ROLE_ID)
@@ -238,7 +217,6 @@ async def warn(ctx, member: discord.Member, *, reason: str = "لم يتم ذكر
     })
     count = len(warnings_log[member.id])
     await ctx.reply(f"⚠️ تم تحذير {member.mention} (تحذير رقم {count}). السبب: `{reason}`", mention_author=True)
-
 
 @bot.command()
 @commands.has_role(ADMIN_ROLE_ID)
@@ -251,31 +229,23 @@ async def warnings(ctx, member: discord.Member):
     embed = discord.Embed(title=f"⚠️ تحذيرات {member.display_name}", description=listing, color=discord.Color.orange())
     await ctx.reply(embed=embed, mention_author=True)
 
-
 @bot.command()
 @commands.has_role(ADMIN_ROLE_ID)
 async def clearwarns(ctx, member: discord.Member):
     if member.id in warnings_log:
         warnings_log[member.id] = []
-        await ctx.reply(f"🧹 تم تصفية ومسح جميع تحذيرات العضو {member.mention} بنجاح!", mention_author=True)
+        await ctx.reply(f"🧹 تم مسح جميع تحذيرات {member.mention}!", mention_author=True)
     else:
-        await ctx.reply(f"ℹ️ العضو {member.mention} ليس لديه أي تحذيرات أصلًا.", mention_author=True)
-
-
-# ==========================================
-# 🛠️ أوامر صنع الرتب والرومات للأدمنية
-# ==========================================
+        await ctx.reply(f"ℹ️ العضو {member.mention} ليس لديه أي تحذيرات.", mention_author=True)
 
 @bot.command(name='صنع_رتبة', aliases=['createrole'])
 @commands.has_role(ADMIN_ROLE_ID)
 async def create_role(ctx, *, role_name: str):
     try:
-        guild = ctx.guild
-        new_role = await guild.create_role(name=role_name, reason=f"أنشئت بواسطة {ctx.author}")
-        await ctx.reply(f"✨ تم صنع الرتبة بنجاح: {new_role.mention} (الاسم: `{role_name}`)", mention_author=True)
+        new_role = await ctx.guild.create_role(name=role_name, reason=f"أنشئت بواسطة {ctx.author}")
+        await ctx.reply(f"✨ تم صنع الرتبة بنجاح: {new_role.mention}", mention_author=True)
     except Exception as e:
         await ctx.reply(f"❌ حدث خطأ أثناء صنع الرتبة: `{e}`", mention_author=True)
-
 
 @bot.command(name='حذف_رتبة', aliases=['deleterole'])
 @commands.has_role(ADMIN_ROLE_ID)
@@ -283,21 +253,18 @@ async def delete_role(ctx, role: discord.Role):
     try:
         role_name = role.name
         await role.delete(reason=f"حذفت بواسطة {ctx.author}")
-        await ctx.reply(f"🗑️ تم حذف الرتبة **{role_name}** بنجاح!", mention_author=True)
+        await ctx.reply(f"🗑️ تم حذف الرتبة **{role_name}**!", mention_author=True)
     except Exception as e:
         await ctx.reply(f"❌ تعذر حذف الرتبة: `{e}`", mention_author=True)
-
 
 @bot.command(name='صنع_روم', aliases=['createchannel'])
 @commands.has_role(ADMIN_ROLE_ID)
 async def create_channel(ctx, *, channel_name: str):
     try:
-        guild = ctx.guild
-        new_channel = await guild.create_text_channel(name=channel_name)
-        await ctx.reply(f"📢 تم إنشاء الروم الكتابي بنجاح: {new_channel.mention}", mention_author=True)
+        new_channel = await ctx.guild.create_text_channel(name=channel_name)
+        await ctx.reply(f"📢 تم إنشاء الروم: {new_channel.mention}", mention_author=True)
     except Exception as e:
         await ctx.reply(f"❌ حدث خطأ أثناء إنشاء الروم: `{e}`", mention_author=True)
-
 
 @bot.command(name='حذف_روم', aliases=['deletechannel'])
 @commands.has_role(ADMIN_ROLE_ID)
@@ -308,27 +275,23 @@ async def delete_channel(ctx, channel: discord.TextChannel = None):
     except Exception as e:
         await ctx.reply(f"❌ تعذر حذف الروم: `{e}`", mention_author=True)
 
-
 @bot.command(aliases=['مسح'])
 @commands.has_role(ADMIN_ROLE_ID)
 async def clear(ctx, amount: int = 5):
     await ctx.channel.purge(limit=amount + 1)
-    await ctx.send(f"🧹 تم مسح {amount} رسالة يا {ctx.author.mention}!", delete_after=3)
-
+    await ctx.send(f"🧹 تم مسح {amount} رسالة!", delete_after=3)
 
 @bot.command(aliases=['قفل'])
 @commands.has_role(ADMIN_ROLE_ID)
 async def lock(ctx):
     await ctx.channel.set_permissions(ctx.guild.default_role, send_messages=False)
-    await ctx.reply("🔒 تم قفل الروم عن الجميع بنجاح!", mention_author=True)
-
+    await ctx.reply("🔒 تم قفل الروم!", mention_author=True)
 
 @bot.command(aliases=['فتح'])
 @commands.has_role(ADMIN_ROLE_ID)
 async def unlock(ctx):
     await ctx.channel.set_permissions(ctx.guild.default_role, send_messages=True)
-    await ctx.reply("🔓 تم فك قفل الروم وإتاحته للجميع!", mention_author=True)
-
+    await ctx.reply("🔓 تم فتح الروم!", mention_author=True)
 
 @bot.command(aliases=['سلومود'])
 @commands.has_role(ADMIN_ROLE_ID)
@@ -337,8 +300,7 @@ async def slowmode(ctx, seconds: int = 0):
     if seconds == 0:
         await ctx.reply("🐇 تم إيقاف الوضع البطيء.", mention_author=True)
     else:
-        await ctx.reply(f"🐢 تم تفعيل الوضع البطيء: رسالة كل **{seconds}** ثانية.", mention_author=True)
-
+        await ctx.reply(f"🐢 الوضع البطيء: رسالة كل **{seconds}** ثانية.", mention_author=True)
 
 @bot.command()
 @commands.has_role(ADMIN_ROLE_ID)
@@ -349,12 +311,10 @@ async def rolelist(ctx):
     embed = discord.Embed(title=f"📋 رتب سيرفر {ctx.guild.name}", description=listing, color=discord.Color.purple())
     await ctx.reply(embed=embed, mention_author=True)
 
-
 @bot.command()
 @commands.has_role(ADMIN_ROLE_ID)
 async def ping(ctx):
-    await ctx.reply(f"🏓 شغال ياحلو! سرعة الاستجابة: **{round(bot.latency * 1000)}ms**", mention_author=True)
-
+    await ctx.reply(f"🏓 شغال! سرعة الاستجابة: **{round(bot.latency * 1000)}ms**", mention_author=True)
 
 @bot.command()
 @commands.has_role(ADMIN_ROLE_ID)
@@ -364,33 +324,30 @@ async def botstats(ctx):
     minutes, seconds = divmod(remainder, 60)
     embed = discord.Embed(title="⚙️ حالة البوت", color=discord.Color.green())
     embed.add_field(name="⏱️ مدة التشغيل", value=f"{hours}س {minutes}د {seconds}ث", inline=True)
-    embed.add_field(name="🌐 عدد السيرفرات", value=str(len(bot.guilds)), inline=True)
+    embed.add_field(name="🌐 السيرفرات", value=str(len(bot.guilds)), inline=True)
     embed.add_field(name="📶 البينق", value=f"{round(bot.latency * 1000)}ms", inline=True)
     await ctx.reply(embed=embed, mention_author=True)
 
-
 # ==========================================
-# 🛑 معالجة الأخطاء الشاملة
+# 🛑 إدارة الأخطاء والتشغيل الآمن
 # ==========================================
 
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.MissingRole):
-        await ctx.reply("❌ عذراً، هذا الأمر مخصص للإدارة العليا فقط! الأعضاء العاديين ما لهم حق.", mention_author=True)
+        await ctx.reply("❌ عذراً، هذا الأمر مخصص للإدارة العليا فقط!", mention_author=True)
     elif isinstance(error, commands.MissingRequiredArgument):
-        await ctx.reply("❌ يرجى التأكد من كتابة الأمر بأسلوب صحيح وإدخال جميع البيانات المطلوب.", mention_author=True)
-    elif isinstance(error, commands.CommandNotFound):
-        pass  # يتجاهل الكلمات اليومية التي تبدأ بـ $ وليست أوامر
-    else:
-        print(f"حدث خطأ غير متوقع: {error}")
-
+        await ctx.reply("❌ يرجى كتابة جميع البيانات المطلوبة للأمر.", mention_author=True)
 
 @bot.event
 async def on_ready():
-    print(f"✅ تم تشغيل بوت النظام الإداري بنجاح: {bot.user}")
+    print(f"✅ تم تشغيل البوت بنجاح: {bot.user}")
 
-
-# تشغيل خادم الويب للحفاظ على الاتصال 24/7
-keep_alive()
-
-bot.run(os.environ.get("DISCORD_TOKEN"))
+# تشغيل خادم الويب أولاً ثم تشغيل البوت
+if __name__ == "__main__":
+    keep_alive()
+    token = os.environ.get("DISCORD_TOKEN")
+    if token:
+        bot.run(token)
+    else:
+        print("❌ خطأ: لم يتم العثور على DISCORD_TOKEN في Environment Variables!")
