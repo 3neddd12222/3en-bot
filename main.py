@@ -18,7 +18,6 @@ def home():
 
 
 def run_flask():
-    # تعديل البورت هنا عشان يتوافق تلقائياً مع رندر وما يعطيني إيرور Exit status 1
     port = int(os.environ.get("PORT", 8080))
     app.run(host='0.0.0.0', port=port)
 
@@ -29,20 +28,29 @@ def keep_alive():
     t.start()
 
 
-# --- 2. إعدادات البوت والـ Intents ---
-intents = discord.Intents.default()
-intents.message_content = True
-intents.members = True
+# --- 2. إعدادات البوت والـ Intents الشاملة ---
+intents = discord.Intents.all()  # تفعيل كل الأذونات لمنع أي تعارض في القراءة
 
 bot = commands.Bot(command_prefix="$", intents=intents, help_command=None)
 
-# رتبة الأدمن الوحيدة اللي تتحكم بكل أوامر النظام
+# رتبة الأدمن الوحيدة اللي تتحكم بكل أوامر النظام (الـ ID الخاص بك)
 ADMIN_ROLE_ID = 1544759188289359944
 
 BOT_START_TIME = time.time()
 
-# سجل بسيط للتحذيرات (بالذاكرة فقط -- يروح إذا البوت أعاد التشغيل)
+# سجل بسيط للتحذيرات (بالذاكرة فقط)
 warnings_log: dict[int, list[dict]] = {}
+
+
+# --- 3. معالج الرسائل والأوامر المباشر ---
+@bot.event
+async def on_message(message):
+    # تجاهل رسائل البوتات
+    if message.author.bot:
+        return
+
+    # إجبار البوت على معالجة الأوامر تلقائياً
+    await bot.process_commands(message)
 
 
 # ==========================================
@@ -362,35 +370,19 @@ async def botstats(ctx):
 
 
 # ==========================================
-# 🛑 معالجة الأخطاء
+# 🛑 معالجة الأخطاء الشاملة
 # ==========================================
 
-@role_toggle.error
-@kick.error
-@ban.error
-@timeout.error
-@untimeout.error
-@nickname.error
-@warn.error
-@warnings.error
-@clearwarns.error
-@create_role.error
-@delete_role.error
-@create_channel.error
-@delete_channel.error
-@ping.error
-@clear.error
-@lock.error
-@unlock.error
-@slowmode.error
-@rolelist.error
-@botstats.error
-@adminhelp.error
-async def admin_commands_error(ctx, error):
+@bot.event
+async def on_command_error(ctx, error):
     if isinstance(error, commands.MissingRole):
         await ctx.reply("❌ عذراً، هذا الأمر مخصص للإدارة العليا فقط! الأعضاء العاديين ما لهم حق.", mention_author=True)
+    elif isinstance(error, commands.MissingRequiredArgument):
+        await ctx.reply("❌ يرجى التأكد من كتابة الأمر بأسلوب صحيح وإدخال جميع البيانات المطلوب.", mention_author=True)
+    elif isinstance(error, commands.CommandNotFound):
+        pass  # يتجاهل الكلمات اليومية التي تبدأ بـ $ وليست أوامر
     else:
-        raise error
+        print(f"حدث خطأ غير متوقع: {error}")
 
 
 @bot.event
