@@ -5,25 +5,21 @@ import time
 from datetime import timedelta
 import discord
 from discord.ext import commands
-from flask import Flask
-from threading import Thread
+from aiohttp import web
 
-# --- 1. خادم ويب مصغر (Flask) متوافق تماماً مع Render ---
-app = Flask('')
+# --- 1. خادم ويب خفيف بـ Aiohttp لمنع إغلاق Render ---
+async def handle(request):
+    return web.Response(text="Bot is Alive 24/7!")
 
-@app.route('/')
-def home():
-    return "Bot is Alive 24/7!"
-
-def run_flask():
-    # استخدام المنفذ المخصص من Render تلقائياً لتجنب إغلاق السيرفر
+async def start_web_server():
+    app = web.Application()
+    app.router.add_get('/', handle)
+    runner = web.AppRunner(app)
+    await runner.setup()
     port = int(os.environ.get("PORT", 10000))
-    app.run(host='0.0.0.0', port=port)
-
-def keep_alive():
-    t = Thread(target=run_flask)
-    t.daemon = True
-    t.start()
+    site = web.TCPSite(runner, '0.0.0.0', port)
+    await site.start()
+    print(f"🌐 Web server running on port {port}")
 
 # --- 2. إعدادات البوت والـ Intents الآمنة ---
 intents = discord.Intents.default()
@@ -33,12 +29,16 @@ intents.guilds = True
 
 bot = commands.Bot(command_prefix="$", intents=intents, help_command=None)
 
-# رتبة الأدمن الوحيدة
 ADMIN_ROLE_ID = 1544759188289359944
 BOT_START_TIME = time.time()
 warnings_log: dict[int, list[dict]] = {}
 
-# --- 3. معالج الرسائل المباشر لضمان معالجة الأوامر ---
+# --- 3. تشغيل السيرفر والمباشرة بعد دخول البوت ---
+@bot.event
+async def on_ready():
+    print(f"✅ تم تشغيل البوت بنجاح: {bot.user}")
+    await start_web_server()
+
 @bot.event
 async def on_message(message):
     if message.author.bot:
@@ -329,7 +329,7 @@ async def botstats(ctx):
     await ctx.reply(embed=embed, mention_author=True)
 
 # ==========================================
-# 🛑 إدارة الأخطاء والتشغيل الآمن
+# 🛑 إدارة الأخطاء والتشغيل
 # ==========================================
 
 @bot.event
@@ -339,15 +339,9 @@ async def on_command_error(ctx, error):
     elif isinstance(error, commands.MissingRequiredArgument):
         await ctx.reply("❌ يرجى كتابة جميع البيانات المطلوبة للأمر.", mention_author=True)
 
-@bot.event
-async def on_ready():
-    print(f"✅ تم تشغيل البوت بنجاح: {bot.user}")
-
-# تشغيل خادم الويب أولاً ثم تشغيل البوت
 if __name__ == "__main__":
-    keep_alive()
     token = os.environ.get("DISCORD_TOKEN")
     if token:
         bot.run(token)
     else:
-        print("❌ خطأ: لم يتم العثور على DISCORD_TOKEN في Environment Variables!")
+        print("❌ خطأ: لم يتم العثور على DISCORD_TOKEN!")
